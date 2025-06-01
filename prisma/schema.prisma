@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+enum EstadoSerie {
+  FINALIZADA
+  EN_EMISION
+  PROXIMAMENTE
+  CANCELADA
+  PAUSADA
+  PILOTO
+}
+
+enum TipoRolActor {
+  PRINCIPAL
+  SECUNDARIO
+  RECURRENTE
+  INVITADO
+  CAMEO
+  VOZ
+}
+
+enum TipoIdiomaSerie {
+  AUDIO
+  SUBTITULOS
+  AMBOS
+}
+
+
+model Serie {
+  id           String          @id @default(uuid())
+  titulo       String
+  sinopsis     String?
+  año          Int?
+  temporadas   Int?
+  poster       String?
+  estado       String?
+  pais         String?
+  rating       Float?
+  trailerUrl   String?
+  actores      ActorSerie[]
+  generos      GeneroSerie[]
+  idiomas      IdiomaSerie[]
+  plataformas  PlataformaSerie[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model Actor {
+  id             String     @id @default(cuid())
+  nombre         String
+  nacionalidad   String?
+  fechaNac       DateTime?
+  foto           String?
+  biografia      String?  
+  series         ActorSerie[]
+}
+
+model ActorSerie {
+  serie        Serie        @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  serieId      String
+  actor        Actor        @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  actorId      String
+  personaje    String?
+  tipoRol      TipoRolActor?
+
+  @@id([serieId, actorId])
+}
+
+model Genero {
+  id        String   @id @default(cuid())
+  nombre    String   @unique
+  
+  series    GeneroSerie[]
+}
+
+model GeneroSerie {
+  serie     Serie  @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  serieId   String
+  genero    Genero @relation(fields: [generoId], references: [id], onDelete: Cascade)
+  generoId  String
+
+  @@id([serieId, generoId])
+}
+
+model Idioma {
+  id        String   @id @default(cuid())
+  nombre    String   @unique
+  codigo    String   @unique
+  
+  series    IdiomaSerie[]
+}
+
+model IdiomaSerie {
+  serie     Serie           @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  serieId   String
+  idioma    Idioma          @relation(fields: [idiomaId], references: [id], onDelete: Cascade)
+  idiomaId  String
+  tipo      TipoIdiomaSerie
+
+  @@id([serieId, idiomaId])
+}
+
+model Plataforma {
+  id        String   @id @default(cuid())
+  nombre    String   @unique
+  logo      String?
+  
+  series    PlataformaSerie[]
+}
+
+model PlataformaSerie {
+  serie         Serie      @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  serieId       String
+  plataforma    Plataforma @relation(fields: [plataformaId], references: [id], onDelete: Cascade)
+  plataformaId  String
+  disponible    Boolean    @default(true)
+  urlSerieEnPlataforma String?
+
+  @@id([serieId, plataformaId])
+}
