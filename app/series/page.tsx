@@ -1,26 +1,141 @@
-import { prisma } from '@/lib/prisma'
+'use client'
+
+import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { notFound } from 'next/navigation'
+import SeriesFilters from '../components/SeriesFilters'
+import ImageWithFallback from '../components/ImageWithFallback'
+import SmartImage from '../components/SmartImageProps'
 
-export default async function SeriesPage() {
-  const series = await prisma.serie.findMany({
-    include: {
-      generos: { include: { genero: true } },
-      plataformas: { include: { plataforma: true } },
-      _count: { select: { actores: true } }
-    },
-    orderBy: { createdAt: 'desc' }
-  })
 
-  if (!series) return notFound()
+type SortOption = 'newest' | 'oldest' | 'title' | 'year' | 'seasons'
+
+interface FilterState {
+  search: string
+  selectedGenres: string[]
+  selectedPlatforms: string[]
+  sortBy: SortOption
+  pais: string | null
+}
+
+interface Serie {
+  pais: any
+  id: string
+  titulo: string
+  año?: number | null
+  temporadas?: number | null
+  sinopsis?: string | null
+  poster?: string | null
+  createdAt: Date
+  generos: Array<{ genero: { id: string; nombre: string } }>
+  plataformas: Array<{ plataforma: { id: string; nombre: string } }>
+  _count: { actores: number }
+}
+
+export default function SeriesPage() {
+  const [series, setSeries] = useState<Serie[]>([])
+  const [filteredSeries, setFilteredSeries] = useState<Serie[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchSeries = async () => {
+      try {
+        const response = await fetch('/api/series')
+        const data = await response.json()
+        setSeries(data)
+        setFilteredSeries(data)
+      } catch (error) {
+        console.error('Error fetching series:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSeries()
+  }, [])
+
+  const handleFiltersChange = useCallback((filters: FilterState) => {
+    let filtered = [...series]
+
+    if (filters.search) {
+      const search = filters.search.toLowerCase()
+      filtered = filtered.filter(serie =>
+        serie.titulo.toLowerCase().includes(search) ||
+        serie.sinopsis?.toLowerCase().includes(search)
+      )
+    }
+
+    if (filters.selectedGenres.length > 0) {
+      filtered = filtered.filter(serie =>
+        serie.generos.some(sg => filters.selectedGenres.includes(sg.genero.id))
+      )
+    }
+
+    if (filters.selectedPlatforms.length > 0) {
+      filtered = filtered.filter(serie =>
+        serie.plataformas.some(sp => filters.selectedPlatforms.includes(sp.plataforma.id))
+      )
+    }
+
+    if (filters.pais) {
+      filtered = filtered.filter(serie => serie.pais === filters.pais)
+    }
+
+    const sortFunctions = {
+      newest: (a: Serie, b: Serie) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      oldest: (a: Serie, b: Serie) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      title: (a: Serie, b: Serie) => a.titulo.localeCompare(b.titulo),
+      year: (a: Serie, b: Serie) => (b.año || 0) - (a.año || 0),
+      seasons: (a: Serie, b: Serie) => (b.temporadas || 0) - (a.temporadas || 0)
+    }
+
+    filtered.sort(sortFunctions[filters.sortBy])
+    setFilteredSeries(filtered)
+  }, [series])
 
   const fallbackPoster = (title: string) =>
     `https://placehold.co/600x900/E0E7FF/4338CA?text=${encodeURIComponent(title)}`
 
+  // Extract unique genres and platforms
+  const uniqueGenres = Array.from(
+    new Map(
+      series.flatMap(s => s.generos.map(sg => sg.genero))
+        .map(g => [g.id, g])
+    ).values()
+  )
+
+  const uniqueCountries = Array.from(
+    new Set(
+      series
+        .map(s => s.pais)
+        .filter((pais): pais is string => Boolean(pais))
+    )
+  ).sort()
+
+  const uniquePlatforms = Array.from(
+    new Map(
+      series.flatMap(s => s.plataformas.map(sp => sp.plataforma))
+        .map(p => [p.id, p])
+    ).values()
+  )
+
+  if (loading) {
+    return (
+      <section className="container mx-auto px-4 pb-16 pt-8">
+        <div className="animate-pulse">
+          <div className="mb-8 h-8 w-64 bg-slate-200 rounded dark:bg-slate-700"></div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] bg-slate-200 rounded-xl dark:bg-slate-700"></div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="container mx-auto px-4 pb-16 pt-8">
-      {/* ─────────────────── Header ─────────────────── */}
       <header className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200">
           Catálogo de Series
@@ -34,29 +149,49 @@ export default async function SeriesPage() {
         </Link>
       </header>
 
-      {/* ─────────────────── Listado ─────────────────── */}
-      {series.length === 0 ? (
+      <SeriesFilters
+        genres={uniqueGenres}
+        platforms={uniquePlatforms}
+        onFiltersChange={handleFiltersChange}
+        pais={uniqueCountries}
+
+      />
+
+      {filteredSeries.length === 0 && series.length > 0 ? (
+        <p className="py-24 text-center text-slate-500 dark:text-slate-400">
+          No se encontraron series con los filtros aplicados.
+        </p>
+      ) : filteredSeries.length === 0 ? (
         <p className="py-24 text-center text-slate-500 dark:text-slate-400">
           No hay series todavía. ¡Agrega la primera!
         </p>
       ) : (
         <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {series.map((serie) => (
+          {filteredSeries.map((serie) => (
             <li key={serie.id}>
               <Link
                 href={`/series/${serie.id}`}
                 className="group relative flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:bg-slate-800"
               >
-                {/* ────────── Poster ────────── */}
                 <div className="relative aspect-[3/4] w-full bg-slate-200 dark:bg-slate-700">
-                  <Image
-                    src={serie.poster ?? fallbackPoster(serie.titulo)}
-                    alt={serie.titulo}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  {/* Gradiente y géneros */}
+                  <div className="relative aspect-[2/3] w-full bg-slate-200 dark:bg-slate-700">
+                    <SmartImage
+                      src={serie.poster}
+                      imageTitle={serie.titulo}
+                      alt={serie.titulo}
+                      type="poster"
+                      fill
+                      className="transition-transform duration-300 group-hover:scale-110 object-cover"
+                    />
+
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-opacity" />
+
+                    {serie.generos?.length > 0 && (
+                      <span className="absolute top-2 left-2 bg-violet-600 text-white text-xs font-semibold px-2 py-1 rounded">
+                        {serie.generos[0].genero.nombre}
+                      </span>
+                    )}
+                  </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-80 group-hover:opacity-60" />
                   <div className="absolute bottom-2 left-2 flex flex-wrap gap-1">
                     {serie.generos.slice(0, 3).map(({ genero }) => (
@@ -75,7 +210,6 @@ export default async function SeriesPage() {
                   </div>
                 </div>
 
-                {/* ────────── Info ────────── */}
                 <div className="flex flex-grow flex-col gap-2 p-4">
                   <h2 className="line-clamp-2 text-lg font-semibold leading-snug text-slate-800 transition-colors group-hover:text-violet-700 dark:text-slate-100 dark:group-hover:text-violet-400">
                     {serie.titulo}

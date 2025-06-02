@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import Link from "next/link";
 import SearchBar from "./components/SearchBar";
 import AppHeader from "./components/AppHeader";
+import { getPosterPath } from "@/lib/getPosterPath";
 
 const prisma = new PrismaClient();
 
@@ -14,16 +15,19 @@ interface HomePageSerie {
 }
 
 export default async function HomePage() {
-  let series: HomePageSerie[] = [];
+  let rawSeriesData: {
+    id: string;
+    titulo: string;
+    año: number | null;
+  }[] = [];
   try {
-    series = await prisma.serie.findMany({
+    rawSeriesData = await prisma.serie.findMany({
       take: 6,
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
         titulo: true,
         año: true,
-        poster: true,
       },
     });
   } catch (error) {
@@ -31,6 +35,16 @@ export default async function HomePage() {
   } finally {
     await prisma.$disconnect();
   }
+
+  const series: HomePageSerie[] = await Promise.all(
+    rawSeriesData.map(async (serieData) => {
+      const posterPath = await getPosterPath(serieData.titulo);
+      return {
+        ...serieData,
+        poster: posterPath,
+      };
+    })
+  );
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans antialiased">
@@ -43,13 +57,13 @@ export default async function HomePage() {
 
         {/* Imágenes decorativas a los costados (ocultas en pantallas pequeñas) */}
         <img
-          src="/images/hero-left.png"
+          src="/ramen.png"
           alt=""
           className="pointer-events-none select-none absolute hidden lg:block
                left-0 top-1/2 -translate-y-1/2 w-48 xl:w-64 opacity-50"
         />
         <img
-          src="/images/hero-right.png"
+          src="/ramen.png"
           alt=""
           className="pointer-events-none select-none absolute hidden lg:block
                right-0 top-1/2 -translate-y-1/2 w-48 xl:w-64 opacity-50"
@@ -90,9 +104,9 @@ export default async function HomePage() {
                   aria-label={`View details for ${serie.titulo}`}
                 >
                   <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden h-full flex flex-col transform hover:scale-105 hover:shadow-xl transition-all duration-300 ease-out">
-                    <div className="relative h-56 bg-slate-200 dark:bg-slate-700">
+                    <div className="relative h-56 bg-slate-200 dark:bg-slate-700"> {/* Considera aspect-[3/4] o similar si las imágenes son retrato */}
                       <img
-                        src={serie.poster || `https://placehold.co/600x400/E0E7FF/4338CA?text=${encodeURIComponent(serie.titulo)}`}
+                        src={serie.poster ?? "img/default-poster.png"}
                         alt={serie.titulo}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                       />
