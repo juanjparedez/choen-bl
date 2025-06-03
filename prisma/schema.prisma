@@ -7,10 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
+// ========== ENUMS ==========
 enum EstadoSerie {
-  FINALIZADA
   EN_EMISION
+  FINALIZADA
   PROXIMAMENTE
   CANCELADA
   PAUSADA
@@ -32,52 +32,188 @@ enum TipoIdiomaSerie {
   AMBOS
 }
 
+enum WatchlistEstado {
+  QUIERO_VER
+  VIENDO
+  COMPLETADA
+  ABANDONADA
+}
+
+// ========== MODELOS PRINCIPALES ==========
+
+model User {
+  id          String        @id @default(cuid())
+  email       String        @unique
+  name        String?
+  avatar      String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  ratings     SerieRating[]
+  watchlist   Watchlist[]
+  @@index([createdAt])
+}
 
 model Serie {
-  id           String          @id @default(uuid())
-  titulo       String
-  sinopsis     String?
-  año          Int?
-  temporadas   Int?
-  poster       String?
-  estado       String?
-  pais         String?
-  rating       Float?
-  trailerUrl   String?
-  actores      ActorSerie[]
-  generos      GeneroSerie[]
-  idiomas      IdiomaSerie[]
-  plataformas  PlataformaSerie[]
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  id                String              @id @default(uuid())
+  titulo            String
+  sinopsis          String?
+  año               Int?
+  temporadas        Int?
+  episodios         Int?
+  duracionPromedio  Int?                // en minutos
+  
+  // Imágenes
+  poster            String?
+  backdrop          String?
+  banner            String?
+  
+  // Estado y producción
+  estado            EstadoSerie?
+  pais              String?
+  fechaEstreno      DateTime?
+  fechaFinalizacion DateTime?
+  
+  // Información adicional
+  creador           String?
+  productora        String?
+  presupuesto       Float?              // Cambiado de Decimal a Float para SQLite
+  recaudacion       Float?              // Cambiado de Decimal a Float para SQLite
+  
+  // Contenido
+  rating            Float?
+  trailerUrl        String?
+  premios           String?             // JSON string
+  notasCritica      String?
+  
+  // Timestamps
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  // Relaciones
+  actores           ActorSerie[]
+  generos           GeneroSerie[]
+  idiomas           IdiomaSerie[]
+  plataformas       PlataformaSerie[]
+  tags              SerieTag[]
+  ratings           SerieRating[]
+  watchlists        Watchlist[]
+  temporadasInfo    Temporada[]
+  galeria           MediaItem[]
 }
+
+model Temporada {
+  id               String       @id @default(cuid())
+  serieId          String
+  numeroTemporada  Int
+  titulo           String?
+  sinopsis         String?
+  fechaEstreno     DateTime?
+  fechaFin         DateTime?
+  
+  serie            Serie        @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  episodios        Episodio[]
+  
+  @@unique([serieId, numeroTemporada])
+  @@index([serieId])
+}
+
+model Episodio {
+  id              String      @id @default(cuid())
+  temporadaId     String
+  numeroEpisodio  Int
+  titulo          String?
+  sinopsis        String?
+  duracion        Int?        // en minutos
+  fechaEmision    DateTime?
+  
+  temporada       Temporada   @relation(fields: [temporadaId], references: [id], onDelete: Cascade)
+  
+  @@unique([temporadaId, numeroEpisodio])
+  @@index([temporadaId])
+}
+
+model MediaItem {
+  id          String      @id @default(cuid())
+  serieId     String
+  url         String
+  tipo        MediaTipo
+  descripcion String?
+  orden       Int         @default(0)
+  
+  serie       Serie       @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  @@index([serieId])
+}
+
+enum MediaTipo {
+  POSTER
+  BACKDROP
+  SCREENSHOT
+  BTS // Behind the scenes
+  PROMO
+}
+
+// ========== CATALOGOS ==========
 
 model Actor {
-  id             String     @id @default(cuid())
-  nombre         String
-  nacionalidad   String?
-  fechaNac       DateTime?
-  foto           String?
-  biografia      String?  
-  series         ActorSerie[]
-}
-
-model ActorSerie {
-  serie        Serie        @relation(fields: [serieId], references: [id], onDelete: Cascade)
-  serieId      String
-  actor        Actor        @relation(fields: [actorId], references: [id], onDelete: Cascade)
-  actorId      String
-  personaje    String?
-  tipoRol      TipoRolActor?
-
-  @@id([serieId, actorId])
+  id           String       @id @default(cuid())
+  nombre       String
+  nacionalidad String?
+  fechaNac     DateTime?
+  foto         String?
+  biografia    String?
+  
+  series       ActorSerie[]
 }
 
 model Genero {
-  id        String   @id @default(cuid())
-  nombre    String   @unique
+  id          String        @id @default(cuid())
+  nombre      String        @unique
+  descripcion String?
   
-  series    GeneroSerie[]
+  series      GeneroSerie[]
+}
+
+model Idioma {
+  id      String         @id @default(cuid())
+  nombre  String         @unique
+  codigo  String         @unique
+  
+  series  IdiomaSerie[]
+}
+
+model Plataforma {
+  id          String             @id @default(cuid())
+  nombre      String             @unique
+  logo        String?
+  urlBase     String?            // URL base de la plataforma
+  activa      Boolean            @default(true)
+  
+  series      PlataformaSerie[]
+}
+
+model Tag {
+  id          String     @id @default(cuid())
+  nombre      String     @unique
+  descripcion String?
+  
+  series      SerieTag[]
+}
+
+// ========== RELACIONES N:M ==========
+
+model ActorSerie {
+  serie        Serie         @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  serieId      String
+  actor        Actor         @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  actorId      String
+  personaje    String?
+  tipoRol      TipoRolActor?
+  orden        Int           @default(999) // Para ordenar en pantalla
+
+  @@id([serieId, actorId])
+  @@index([serieId])
+  @@index([actorId])
 }
 
 model GeneroSerie {
@@ -87,14 +223,8 @@ model GeneroSerie {
   generoId  String
 
   @@id([serieId, generoId])
-}
-
-model Idioma {
-  id        String   @id @default(cuid())
-  nombre    String   @unique
-  codigo    String   @unique
-  
-  series    IdiomaSerie[]
+  @@index([serieId])
+  @@index([generoId])
 }
 
 model IdiomaSerie {
@@ -104,24 +234,70 @@ model IdiomaSerie {
   idiomaId  String
   tipo      TipoIdiomaSerie
 
-  @@id([serieId, idiomaId])
-}
-
-model Plataforma {
-  id        String   @id @default(cuid())
-  nombre    String   @unique
-  logo      String?
-  
-  series    PlataformaSerie[]
+  @@id([serieId, idiomaId, tipo])
+  @@index([serieId])
+  @@index([idiomaId])
 }
 
 model PlataformaSerie {
-  serie         Serie      @relation(fields: [serieId], references: [id], onDelete: Cascade)
-  serieId       String
-  plataforma    Plataforma @relation(fields: [plataformaId], references: [id], onDelete: Cascade)
-  plataformaId  String
-  disponible    Boolean    @default(true)
-  urlSerieEnPlataforma String?
+  serie                 Serie       @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  serieId               String
+  plataforma            Plataforma  @relation(fields: [plataformaId], references: [id], onDelete: Cascade)
+  plataformaId          String
+  disponible            Boolean     @default(true)
+  urlSerieEnPlataforma  String?
+  fechaIngreso          DateTime?   @default(now())
+  fechaSalida           DateTime?
 
   @@id([serieId, plataformaId])
+  @@index([serieId])
+  @@index([plataformaId])
+}
+
+model SerieTag {
+  serieId   String
+  tagId     String
+  serie     Serie    @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@id([serieId, tagId])
+  @@index([serieId])
+  @@index([tagId])
+}
+
+// ========== INTERACCION USUARIO ==========
+
+model SerieRating {
+  id         String   @id @default(cuid())
+  serieId    String
+  userId     String
+  rating     Float
+  comentario String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  serie      Serie    @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([serieId, userId])
+  @@index([serieId])
+  @@index([userId])
+}
+
+model Watchlist {
+  id        String          @id @default(cuid())
+  userId    String
+  serieId   String
+  estado    WatchlistEstado
+  progreso  Int             @default(0) // episodios vistos
+  notas     String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serie     Serie           @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, serieId])
+  @@index([userId])
+  @@index([serieId])
 }

@@ -25,13 +25,15 @@ interface FilterState {
   selectedGenres: string[]
   selectedPlatforms: string[]
   sortBy: SortOption
-  pais: string           // país seleccionado (vacío = todos)
+  pais: string
+  tags: string[]
 }
 
 interface SeriesFiltersProps {
   genres: Array<{ id: string; nombre: string }>
   platforms: Array<{ id: string; nombre: string }>
-  pais: string[]         // lista de países disponibles
+  pais: string[]
+  tags: string[]
   onFiltersChange: (filters: FilterState) => void
   initialFilters?: Partial<FilterState>
 }
@@ -51,6 +53,7 @@ export default function SeriesFilters({
   genres,
   platforms,
   pais: countries,
+  tags,
   onFiltersChange,
   initialFilters = {}
 }: SeriesFiltersProps) {
@@ -60,20 +63,23 @@ export default function SeriesFilters({
     selectedPlatforms: [],
     sortBy: 'newest',
     pais: '',
+    tags: [],
     ...initialFilters
   })
 
   const [showGenres, setShowGenres] = useState(false)
   const [showPlatforms, setShowPlatforms] = useState(false)
   const [showCountries, setShowCountries] = useState(false)
-
+  const [showTags, setShowTags] = useState(false)
   const genreRef = useRef<HTMLDivElement>(null)
   const platformRef = useRef<HTMLDivElement>(null)
   const countryRef = useRef<HTMLDivElement>(null)
+  const tagRef = useRef<HTMLDivElement>(null)
 
   useClickOutside(genreRef, () => setShowGenres(false))
   useClickOutside(platformRef, () => setShowPlatforms(false))
   useClickOutside(countryRef, () => setShowCountries(false))
+  useClickOutside(tagRef, () => setShowTags(false))
 
   const debouncedSearch = useDebounce(filters.search, 300)
 
@@ -110,7 +116,7 @@ export default function SeriesFilters({
 
   const handleCountrySelect = (country: string) => {
     setFilters(prev => ({ ...prev, pais: country }))
-    setShowCountries(false)          // << cierra el menú
+    setShowCountries(false)
   }
 
   const clearFilters = () =>
@@ -119,10 +125,10 @@ export default function SeriesFilters({
       selectedGenres: [],
       selectedPlatforms: [],
       sortBy: 'newest',
-      pais: ''
+      pais: '',
+      tags: []
     })
 
-  /* ─────────── Comunicar cambio a componente padre ─────────── */
   useEffect(() => {
     onFiltersChange({ ...filters, search: debouncedSearch })
   }, [
@@ -130,7 +136,8 @@ export default function SeriesFilters({
     filters.selectedGenres,
     filters.selectedPlatforms,
     filters.sortBy,
-    filters.pais,              // ← nuevo
+    filters.pais,
+    filters.tags,
     onFiltersChange
   ])
 
@@ -139,9 +146,20 @@ export default function SeriesFilters({
     filters.selectedGenres.length > 0 ||
     filters.selectedPlatforms.length > 0 ||
     filters.pais ||
-    filters.sortBy !== 'newest'
+    filters.sortBy !== 'newest' ||
+    filters.tags.length > 0
 
-  /* ───────────────────────────── JSX ───────────────────────────── */
+  function handleTagSelect(tag: string): void {
+    setFilters(prev => ({
+      ...prev,
+      tags: tag === ''
+        ? []
+        : prev.tags.includes(tag)
+          ? prev.tags.filter(t => t !== tag)
+          : [...prev.tags, tag]
+    }))
+    setShowTags(false)
+  }
   return (
     <div className="mb-8 space-y-4">
       {/* Search */}
@@ -269,6 +287,53 @@ export default function SeriesFilters({
                       onClick={() => handleCountrySelect(country)}
                     >
                       {country}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* Etiquetas */}
+        <div className="relative" ref={tagRef}>
+          <button
+            onClick={() => setShowTags(!showTags)}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          >
+            <Filter className="h-4 w-4" />
+            Etiquetas
+            {filters.tags.length > 0 && (
+              <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900 dark:text-violet-300">
+                {filters.tags.length}
+              </span>
+            )}
+            <ChevronDown className="h-4 w-4" />
+          </button>
+          {showTags && (
+            <div className="absolute top-full left-0 z-50 mt-2 w-48 rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+              <ul className="max-h-48 space-y-1 overflow-y-auto text-sm">
+                <li>
+                  <button
+                    className={`w-full rounded px-2 py-1 text-left ${filters.tags.length === 0
+                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
+                      : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
+                      }`}
+                    onClick={() => handleTagSelect('')}
+                  >
+                    Todos
+                  </button>
+                </li>
+                {tags.map(tag => (
+                  <li key={tag}>
+                    <button
+                      className={`w-full rounded px-2 py-1 text-left ${filters.tags.includes(tag)
+                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
+                        : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
+                        }`}
+                      onClick={() => handleTagSelect(tag)}
+                    >
+                      {tag}
                     </button>
                   </li>
                 ))}

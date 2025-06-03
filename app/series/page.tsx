@@ -2,9 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import SeriesFilters from '../components/SeriesFilters'
-import ImageWithFallback from '../components/ImageWithFallback'
 import SmartImage from '../components/SmartImageProps'
 
 
@@ -16,6 +14,7 @@ interface FilterState {
   selectedPlatforms: string[]
   sortBy: SortOption
   pais: string | null
+  tags: string[]
 }
 
 interface Serie {
@@ -28,6 +27,8 @@ interface Serie {
   poster?: string | null
   createdAt: Date
   generos: Array<{ genero: { id: string; nombre: string } }>
+  tags: Array<{ tag: { id: string; nombre: string } }>
+  actores: Array<{ id: string; nombre: string }>
   plataformas: Array<{ plataforma: { id: string; nombre: string } }>
   _count: { actores: number }
 }
@@ -112,6 +113,15 @@ export default function SeriesPage() {
     )
   ).sort()
 
+  const uniqueTags = Array.from(
+    new Set(
+      series.flatMap(s => s?.tags?.map(tag => tag.nombre))
+    )
+  ).sort()
+  .map(tag => ({ nombre: tag })) || ['todos']
+
+  console.log({ series })
+
   const uniquePlatforms = Array.from(
     new Map(
       series.flatMap(s => s.plataformas.map(sp => sp.plataforma))
@@ -154,6 +164,7 @@ export default function SeriesPage() {
         platforms={uniquePlatforms}
         onFiltersChange={handleFiltersChange}
         pais={uniqueCountries}
+        tags={uniqueTags}
 
       />
 
