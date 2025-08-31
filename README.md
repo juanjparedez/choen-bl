@@ -1,33 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Choen BL
 
-## Getting Started
+Proyecto web para la gestión y exploración de series BL (Boys' Love).
 
-First, run the development server:
+## Descripción
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Esta aplicación permite buscar, filtrar, agregar y editar información sobre series BL, incluyendo imágenes, banners y sinopsis. Utiliza Next.js para el frontend y Prisma para la gestión de la base de datos SQLite.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tecnologías
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Next.js 14
+- React
+- Prisma ORM
+- SQLite
+- Tailwind CSS
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Estructura del proyecto
 
-## Learn More
+- `app/` - Páginas principales y rutas API
+- `components/` - Componentes reutilizables de la interfaz
+- `lib/` - Utilidades y helpers
+- `prisma/` - Esquema y migraciones de la base de datos
+- `public/` - Imágenes y archivos estáticos
 
-To learn more about Next.js, take a look at the following resources:
+## Instalación y uso
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Instala las dependencias:
+   ```bash
+   npm install
+   ```
+2. Ejecuta el servidor de desarrollo:
+   ```bash
+   npm run dev
+   ```
+3. Accede a [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Configuración
+
+Si usas una base de datos diferente, edita el archivo `.env` y el esquema en `prisma/schema.prisma`.
+
+## Créditos y recursos
+
+- [Next.js](https://nextjs.org/)
+- [Prisma](https://www.prisma.io/)
+- [Tailwind CSS](https://tailwindcss.com/)
+
+---
+
+¡Contribuciones y sugerencias son bienvenidas!
 
 ## Deploy on Vercel
 
