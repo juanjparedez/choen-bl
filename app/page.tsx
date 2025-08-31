@@ -72,11 +72,11 @@ export default async function HomePage() {
         {/* Contenido principal */}
         <div className="container mx-auto px-6 relative">
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
-            Bienvenidx a Mundo BL
+            Bienvenid@ a Mundo BL
           </h1>
           <p className="text-lg md:text-xl text-violet-100 max-w-2xl mx-auto">
-            Este es mi espacio dedicado al <strong>Boys Love</strong>. Aquí encontrarás
-            sinopsis, reseñas detalladas, análisis de personajes y recomendaciones hechas con cariño.
+            Este es mi espacio dedicado al <strong>Boys Love</strong>: 
+            Sinopsis, reseñas, escenas y recomendaciones.
           </p>
         </div>
       </section>

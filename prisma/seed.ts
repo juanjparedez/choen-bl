@@ -23,7 +23,7 @@ async function main() {
   const generosData = [
     'Drama', 'Comedia', 'Acción', 'Thriller', 'Ciencia Ficción', 'Fantasía',
     'Crimen', 'Misterio', 'Romance', 'Animación', 'Documental', 'Musical',
-    'Escolar', 'Slice of Life', 'Supernatural', 'Boys Love', 'Yaoi', 'Shounen-ai'
+    'Escolar', 'LGBT', 'Supernatural', 'Boys Love', 'Yaoi', 'Hentai',
   ];
 
   const generos = await prisma.genero.createMany({
@@ -79,12 +79,50 @@ async function main() {
 
   // Crear Tags personalizables
   const tagsData = [
-    { nombre: "Universidad", descripcion: "Ambientado en la universidad" },
+    { nombre: "Universitarios", descripcion: "Ambientado en la universidad" },
     { nombre: "Falso noviazgo", descripcion: "Relación falsa que se vuelve real" },
-    { nombre: "Popular", descripcion: "Personaje popular" },
-    { nombre: "Enemigos a Amantes", descripcion: "De enemigos a amantes" },
-    { nombre: "Música", descripcion: "Tema musical o banda sonora destacada" },
-    { nombre: "Comedia Romántica", descripcion: "Comedia con elementos románticos" },
+    { nombre: "Popular/nerd", descripcion: "Personaje popular que se enamora de un personaje nerd" },
+    { nombre: "Enemy to lovers", descripcion: "De enemigos a amantes" },
+    { nombre: "Músicos", descripcion: "Personajes que tienen una banda" },
+    { nombre: "Diferencia de edad", descripcion: "Relación con gran diferencia de edad" },
+    { nombre: "Diferencia de altura", descripcion: "Relación con gran diferencia de altura" },
+    { nombre: "Rico/Pobre", descripcion: "Relación entre un personaje rico y uno pobre" },
+    { nombre: "Bad boy/Good boy", descripcion: "Relación entre un personaje bueno y uno malo" },
+    { nombre: "Histriónico/Reservado", descripcion: "Relación entre un personaje histriónico y otro reservado" },
+    { nombre: "Escolar", descripcion: "Ambientado en la secundaria" },
+    { nombre: "Policial/Detectives", descripcion: "Personajes policías o detectives" },
+    { nombre: "Doctor/Dentista/Veterinario", descripcion: "Personajes doctores, dentistas o veterinarios" },
+    { nombre: "Artista", descripcion: "Personajes artistas" },
+    { nombre: "Idols", descripcion: "Personajes idols" },
+    { nombre: "Vidas pasadas/Almas gemelas", descripcion: "Vidas pasadas/Almas gemeleas" },
+    { nombre: "Viajes en el tiempo", descripcion: "Los personajes viajan al pasado o al futuro" },
+    { nombre: "De época", descripcion: "Ambientado en una época antigua" },
+    { nombre: "Fantasmas", descripcion: "Relación de algún personajes con un fantasma" },
+    { nombre: "Make up", descripcion: "Algún personaje es maquillador o le gusta maquillarse" },
+    { nombre: "Robots", descripcion: "Algún personaje es un robot" },
+    { nombre: "Pelea", descripcion: "Los personajes practican algun arte marcial" },
+    { nombre: "gangsters", descripcion: "Los personajes son gansters" },
+    { nombre: "Chefs", descripcion: "Algún personajes es chef" },
+    { nombre: "Fetiches", descripcion: "Algún personaje tiene un tipo de fetiche" },
+    { nombre: "Friends to lovers", descripcion: "De amigos a novios" },
+    { nombre: "Vampiros", descripcion: "Algún personaje es vampiro" },
+    { nombre: "Jefe/Empleado", descripcion: "Relación entre un jefe y un empleado" },
+    { nombre: "Atletas", descripcion: "Algún personaje es atleta" },
+    { nombre: "Escritores", descripcion: "Algún personaje es escritor" },
+    { nombre: "Omegaverse", descripcion: "Los personajes cumplen con roles del mundo omegaverse" },
+    { nombre: "Bromance", descripcion: "Los personajes tienen un bromance" },
+    { nombre: "Motos/Autos", descripcion: "Las motos y/o autos cumplen un papel importante" },
+    { nombre: "+18", descripcion: "Contiene escenas +18" }, // Si rompe ver acá
+    { nombre: "Pastelería/Cafetería", descripcion: "Algún personaje es dueño o empleado de una pastelería o cafetería" },
+    { nombre: "Mafia", descripcion: "Algún personaje es parte o es perseguido por la mafia" },
+    { nombre: "Abogados", descripcion: "Algún personaje es abogado" },
+    { nombre: "Ladrones", descripcion: "Algún personaje es ladrón" },
+    { nombre: "BDSM", descripcion: "Algún personaje practica el BDSM" },
+    { nombre: "Asesinos", descripcion: "Algún personaje es asesino" },
+    { nombre: "Paternidad", descripcion: "Los personajes son o serán padres" },
+    { nombre: "Oficina", descripcion: "Ambientado en una oficina" },
+    { nombre: "Profesor/Alumno", descripcion: "Relación de un profesor con un alumno" },
+    { nombre: "Boda", descripcion: "Los personajes se casarán" },
   ];
 
   const tags = await prisma.tag.createMany({
@@ -225,6 +263,47 @@ async function main() {
         { url: "badbuddy_promo1.jpg", tipo: MediaTipo.PROMO, descripcion: "Póster promocional" }
       ],
       tags: ["Enemigos a Amantes", "Universidad", "Comedia Romántica"]
+    },
+    {
+      title: "Love in the air",
+      year: 2021,
+      imageUrl: "bad_buddy_poster.jpg",
+      sinopsis: "Pran y Pat son vecinos cuyas familias han sido rivales durante años. Obligados a ser enemigos desde niños, su relación da un giro inesperado cuando terminan en la misma universidad. A medida que pasan más tiempo juntos, descubren que sus sentimientos podrían ser más profundos que el odio que se supone deben sentir.",
+      temporadas: 1,
+      episodios: 12,
+      duracionPromedio: 45,
+      estado: EstadoSerie.FINALIZADA,
+      pais: "Tailandia",
+      rating: 9.4,
+      trailerUrl: "https://youtu.be/BcRZLbhYQYk",
+      generos: ["Yaoi", "Enemigos a Amantes", "Comedia", "Romance", "Escolar"],
+      plataformas: [
+        { nombre: "YouTube", url: "https://www.youtube.com/playlist?list=PLUaqc9PYGzbGcL6R8WXJvW8X0Z1Y7z1x5" }
+      ],
+      idiomas: [
+        { codigo: "th", tipo: TipoIdiomaSerie.AUDIO },
+        { codigo: "es", tipo: TipoIdiomaSerie.SUBTITULOS }
+      ],
+      actores: [
+        { nombre: "Ohm Pawat", personaje: "Pat", tipoRol: TipoRolActor.PRINCIPAL },
+        { nombre: "Nanon Korapat", personaje: "Pran", tipoRol: TipoRolActor.PRINCIPAL }
+      ],
+      temporadasInfo: [
+        {
+          numeroTemporada: 1,
+          titulo: "Temporada 1",
+          sinopsis: "La rivalidad que se convierte en amor",
+          episodios: [
+            { numeroEpisodio: 1, titulo: "Enemigos", duracion: 45, fechaEmision: new Date('2021-10-29') },
+            { numeroEpisodio: 2, titulo: "Confesión", duracion: 45, fechaEmision: new Date('2021-11-05') }
+          ]
+        }
+      ],
+      galeria: [
+        { url: "badbuddy_screenshot1.jpg", tipo: MediaTipo.SCREENSHOT, descripcion: "Escena de confrontación" },
+        { url: "badbuddy_promo1.jpg", tipo: MediaTipo.PROMO, descripcion: "Póster promocional" }
+      ],
+      tags: ["Enemy to lovers", "Universitarios", "Motos/Autos", "Diferencia de altura", "Diferencia de edad", "+18",]
     }
   ];
 
