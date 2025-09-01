@@ -6,18 +6,46 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 
 const MenuIcon = ({ className = "w-6 h-6" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+  <svg
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={2}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M4 6h16M4 12h16M4 18h16"
+    />
   </svg>
 );
 
 const ThemeToggleIcon = ({ className = "w-6 h-6" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+  <svg
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={2}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+    />
   </svg>
 );
 
-function AppHeader() {
+// Vista selector: recibe y dispara el cambio de vista
+export type ViewType = "grid" | "list";
+
+interface AppHeaderProps {
+  viewType?: ViewType;
+  onViewTypeChange?: (view: ViewType) => void;
+}
+
+function AppHeader({ viewType = "grid", onViewTypeChange }: AppHeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
 
@@ -32,11 +60,35 @@ function AppHeader() {
     setTheme(theme === "light" ? "dark" : "light");
   };
 
+  // Selector de vista (solo para home)
+  const viewSelector = (
+    <div className="ml-4">
+      <label
+        htmlFor="viewType"
+        className="mr-2 text-slate-600 dark:text-slate-300 text-sm"
+      >
+        Vista:
+      </label>
+      <select
+        id="viewType"
+        value={viewType}
+        onChange={(e) => onViewTypeChange?.(e.target.value as ViewType)}
+        className="rounded px-2 py-1 text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600"
+      >
+        <option value="grid">Grid</option>
+        <option value="list">Lista</option>
+      </select>
+    </div>
+  );
+
   return (
     <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md shadow-sm dark:shadow-slate-700">
       <div className="container mx-auto flex items-center justify-between p-4">
         <div className="flex items-center space-x-3">
-          <Link href="/" className="flex items-center text-violet-700 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-400 transition-colors">
+          <Link
+            href="/"
+            className="flex items-center text-violet-700 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-400 transition-colors"
+          >
             <Image
               src="/logo.png"
               alt="Mundo BL Logo"
@@ -57,10 +109,11 @@ function AppHeader() {
               {link.label}
             </Link>
           ))}
+          {onViewTypeChange && viewSelector}
           <button
             onClick={toggleTheme}
             className="p-2 text-slate-600 dark:text-slate-300 hover:text-violet-700 dark:hover:text-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500 rounded-md"
-            aria-label="Toggle theme between light and dark mode" // Static aria-label
+            aria-label="Toggle theme between light and dark mode"
           >
             <ThemeToggleIcon />
           </button>
@@ -87,10 +140,11 @@ function AppHeader() {
                 {link.label}
               </Link>
             ))}
+            {onViewTypeChange && viewSelector}
             <button
               onClick={toggleTheme}
               className="block px-3 py-2 rounded-md text-base font-medium text-slate-600 dark:text-slate-300 hover:bg-violet-100 dark:hover:bg-violet-900 hover:text-violet-700 dark:hover:text-violet-400 transition-colors duration-300 text-left"
-              aria-label="Toggle theme between light and dark mode" // Static aria-label
+              aria-label="Toggle theme between light and dark mode"
             >
               {theme === "light" ? "Dark Mode" : "Light Mode"}
             </button>
