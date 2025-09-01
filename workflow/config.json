@@ -1,0 +1,146 @@
+{
+  "name": "Automation PR Creator (Corregido)",
+  "nodes": [
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "requirement",
+              "type": "string",
+              "defaultValue": "Quiero agregar un sistema de etiquetas para las series"
+            }
+          ]
+        }
+      },
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [-20, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:1234/v1/chat/completions",
+        "options": {
+          "timeout": 60000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "local-model"
+            },
+            {
+              "name": "messages",
+              "value": "={{ [\n  {\n    \"role\": \"system\",\n    \"content\": \"Eres un experto en Next.js 14+ con App Router, TypeScript, Prisma y Tailwind. Analiza requerimientos y genera código. SIEMPRE responde con JSON válido con esta estructura: {\\\\\\\"type\\\\\\\": \\\\\\\"add_component|add_page|update_schema|add_tags_system\\\\\\\", \\\\\\\"title\\\\\\\": \\\\\\\"título del PR\\\\\\\", \\\\\\\"requirement\\\\\\\": \\\\\\\"requerimiento original\\\\\\\", \\\\\\\"changes\\\\\\\": \\\\\\\"descripción de cambios\\\\\\\", \\\\\\\"files\\\\\\\": [\\\\\\\"lista de archivos\\\\\\\"], \\\\\\\"component\\\\\\\": {\\\\\\\"name\\\\\\\": \\\\\\\"NombreComponente\\\\\\\", \\\\\\\"code\\\\\\\": \\\\\\\"código del componente\\\\\\\"}, \\\\\\\"schema\\\\\\\": {\\\\\\\"addition\\\\\\\": \\\\\\\"código prisma\\\\\\\"}, \\\\\\\"tags\\\\\\\": {\\\\\\\"componentCode\\\\\\\": \\\\\\\"...\\\\\\\", \\\\\\\"apiCode\\\\\\\": \\\\\\\"...\\\\\\\"}}. Usa la estructura del proyecto: app/ para componentes, app/api/ para rutas, prisma/schema.prisma.\"\n  },\n  {\n    \"role\": \"user\",\n    \"content\": \"Proyecto: choen-bl (series BL tailandesas)\\\\nEstructura: Next.js 14 App Router + Prisma + SQLite\\\\nRequerimiento: {{ $json.requirement }}\"\n  }\n] }}"
+            },
+            {
+              "name": "temperature",
+              "value": 0.1
+            },
+            {
+              "name": "max_tokens",
+              "value": 4096
+            }
+          ]
+        }
+      },
+      "name": "LM Studio Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\nconst content = response.choices[0].message.content;\n\nlet intentJson;\ntry {\n  intentJson = JSON.parse(content);\n} catch (e) {\n  const jsonMatch = content.match(/```json\\s*([\\s\\S]*?)\\s*```/);\n  if (jsonMatch) {\n    intentJson = JSON.parse(jsonMatch[1]);\n  } else {\n    throw new Error('No se pudo parsear el JSON: ' + content);\n  }\n}\n\n// Asegúrate de que el requerimiento original se mantenga en el JSON\nif (!intentJson.requirement) {\n    intentJson.requirement = $json.requirement;\n}\n\nreturn { intent: JSON.stringify(intentJson) };"
+      },
+      "name": "Parse Intent JSON",
+      "type": "n8n-nodes-base.code",
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/repos/juanjparedez/choen-bl/actions/workflows/automation-intents.yml/dispatches",
+        "authentication": "headerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ref",
+              "value": "main"
+            },
+            {
+              "name": "inputs",
+              "value": "={{ {\n  \"intent\": $json.intent,\n  \"draft\": \"true\"\n} }}"
+            }
+          ]
+        }
+      },
+      "name": "Trigger GitHub Action",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [700, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "GitHub API Credential"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "LM Studio Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LM Studio Analysis": {
+      "main": [
+        [
+          {
+            "node": "Parse Intent JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Intent JSON": {
+      "main": [
+        [
+          {
+            "node": "Trigger GitHub Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

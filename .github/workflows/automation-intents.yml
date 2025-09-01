@@ -1,0 +1,55 @@
+# .github/workflows/automation-intents.yml (tu versión mejorada)
+name: automation-intents
+on:
+  workflow_dispatch:
+    inputs:
+      intent:
+        description: "Intent JSON generado por n8n"
+        required: true
+      draft:
+        description: "Abrir PR como draft"
+        required: false
+        default: "true"
+
+jobs:
+  apply-intent:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+
+      - id: save_intent
+        run: |
+          mkdir -p automation/intents
+          echo '${{ inputs.intent }}' > automation/intents/intent-$(date +%Y%m%d%H%M%S).json
+
+      # Ejecutar script de aplicación de cambios
+      - name: Apply Intent Changes
+        run: node scripts/automation/apply-intent.mjs
+        env:
+          INTENT_JSON: "${{ inputs.intent }}"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "feat: ${{ fromJson(inputs.intent).title }}"
+          title: "${{ fromJson(inputs.intent).title }}"
+          body: |
+            🤖 **PR Automático generado por n8n**
+
+            **Requerimiento:** ${{ fromJson(inputs.intent).requirement }}
+
+            **Cambios aplicados:**
+            ${{ fromJson(inputs.intent).changes }}
+
+            **Archivos modificados:**
+            ${{ fromJson(inputs.intent).files }}
+          branch: "automation/intent-${{ github.run_id }}"
+          draft: ${{ inputs.draft }}
