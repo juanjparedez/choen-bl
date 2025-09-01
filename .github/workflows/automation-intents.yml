@@ -28,9 +28,21 @@ jobs:
       - run: npm ci
 
       - name: Save intent to repo
+        shell: bash
+        env:
+          INTENT_JSON: ${{ inputs.intent }}
         run: |
+          set -euo pipefail
           mkdir -p automation/intents
-          printf '%s' "${{ inputs.intent }}" > "automation/intents/intent-${{ github.run_id }}-$(date +%Y%m%d%H%M%S).json"
+          FILE="automation/intents/intent-${{ github.run_id }}-$(date +%Y%m%d%H%M%S).json"
+          if command -v jq >/dev/null 2>&1; then
+            # Valida y normaliza el JSON (compacto) antes de guardar
+            echo "$INTENT_JSON" | jq -c . > "$FILE"
+          else
+            # Fallback sin jq
+            printf '%s' "$INTENT_JSON" > "$FILE"
+          fi
+          echo "Saved $FILE"
 
       - name: Apply intent changes
         env:
