@@ -1,15 +1,14 @@
-# .github/workflows/automation-intents.yml (tu versión mejorada)
 name: automation-intents
 on:
   workflow_dispatch:
     inputs:
       intent:
-        description: "Intent JSON generado por n8n"
+        description: 'Intent JSON generado por n8n'
         required: true
       draft:
-        description: "Abrir PR como draft"
+        description: 'Abrir PR como draft'
         required: false
-        default: "true"
+        default: 'true'
 
 jobs:
   apply-intent:
@@ -17,39 +16,52 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
+
       - run: npm ci
 
-      - id: save_intent
+      - name: Save intent to repo
         run: |
           mkdir -p automation/intents
-          echo '${{ inputs.intent }}' > automation/intents/intent-$(date +%Y%m%d%H%M%S).json
+          printf '%s' "${{ inputs.intent }}" > "automation/intents/intent-${{ github.run_id }}-$(date +%Y%m%d%H%M%S).json"
 
-      # Ejecutar script de aplicación de cambios
-      - name: Apply Intent Changes
-        run: node scripts/automation/apply-intent.mjs
+      - name: Apply intent changes
         env:
-          INTENT_JSON: "${{ inputs.intent }}"
+          INTENT_JSON: ${{ inputs.intent }}
+        run: node scripts/automation/apply-intent.mjs
+
+      - name: Format (optional)
+        run: |
+          npx prisma format || true
+          npx prettier -w . || true
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
-          commit-message: "feat: ${{ fromJson(inputs.intent).title }}"
-          title: "${{ fromJson(inputs.intent).title }}"
+          branch: automation/intent-${{ github.run_id }}
+          draft: ${{ inputs.draft }}
+          commit-message: "chore: apply intent ${{ github.run_id }} — ${{ fromJSON(inputs.intent).title || 'auto' }}"
+          title: "${{ fromJSON(inputs.intent).title || 'Automation: apply intent' }}"
           body: |
             🤖 **PR Automático generado por n8n**
 
-            **Requerimiento:** ${{ fromJson(inputs.intent).requirement }}
+            **Título:** ${{ fromJSON(inputs.intent).title }}
+            **Requerimiento:** ${{ fromJSON(inputs.intent).requirement }}
 
-            **Cambios aplicados:**
-            ${{ fromJson(inputs.intent).changes }}
+            **Cambios:**
+            ${{ fromJSON(inputs.intent).changes }}
 
             **Archivos modificados:**
-            ${{ fromJson(inputs.intent).files }}
-          branch: "automation/intent-${{ github.run_id }}"
-          draft: ${{ inputs.draft }}
+            ${{ toJSON(fromJSON(inputs.intent).files) }}
+
+            **Intent (JSON):**
+            ```json
+            ${{ toJSON(fromJSON(inputs.intent)) }}
+            ```

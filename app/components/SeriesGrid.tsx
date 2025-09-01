@@ -150,7 +150,11 @@ function GridView({ series }: { series: Serie[] }) {
           <div className={posterContainerClass}>
             {serie.poster ? (
               <Image
-                src={serie.poster}
+                src={
+                  serie.poster.startsWith("/") || serie.poster.startsWith("http")
+                    ? serie.poster
+                    : "/" + serie.poster
+                }
                 alt={serie.titulo}
                 fill
                 sizes="(max-width: 768px) 50vw, 200px"
@@ -224,7 +228,11 @@ function SeriesEditCard({
           <div className={posterContainerClass}>
             {serie.poster ? (
               <Image
-                src={serie.poster}
+                src={
+                  serie.poster.startsWith("/") || serie.poster.startsWith("http")
+                    ? serie.poster
+                    : "/" + serie.poster
+                }
                 alt={serie.titulo}
                 fill
                 sizes="48px"
