@@ -1,52 +1,52 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useMemo } from 'react'
-import { Search, Filter, X, ChevronDown } from 'lucide-react'
-import { useRef } from 'react'
+import { useState, useEffect, useMemo } from "react";
+import { Search, Filter, X, ChevronDown } from "lucide-react";
+import { useRef } from "react";
 
+type SortOption = "newest" | "oldest" | "title" | "year" | "seasons";
 
-type SortOption = 'newest' | 'oldest' | 'title' | 'year' | 'seasons'
-
-
-function useClickOutside<T extends HTMLElement>(ref: React.RefObject<T | null>, handler: () => void) {
+function useClickOutside<T extends HTMLElement>(
+  ref: React.RefObject<T | null>,
+  handler: () => void
+) {
   useEffect(() => {
     function listener(e: MouseEvent) {
-      if (!ref.current || ref.current.contains(e.target as Node)) return
-      handler()
+      if (!ref.current || ref.current.contains(e.target as Node)) return;
+      handler();
     }
-    document.addEventListener('mousedown', listener)
-    return () => document.removeEventListener('mousedown', listener)
-  }, [ref, handler])
+    document.addEventListener("mousedown", listener);
+    return () => document.removeEventListener("mousedown", listener);
+  }, [ref, handler]);
 }
 
-
 interface FilterState {
-  search: string
-  selectedGenres: string[]
-  selectedPlatforms: string[]
-  sortBy: SortOption
-  pais: string
-  tags: string[]
+  search: string;
+  selectedGenres: string[];
+  selectedPlatforms: string[];
+  sortBy: SortOption;
+  pais: string;
+  tags: string[];
 }
 
 interface SeriesFiltersProps {
-  genres: Array<{ id: string; nombre: string }>
-  platforms: Array<{ id: string; nombre: string }>
-  pais: string[]
-  tags: string[]
-  onFiltersChange: (filters: FilterState) => void
-  initialFilters?: Partial<FilterState>
+  genres: Array<{ id: string; nombre: string }>;
+  platforms: Array<{ id: string; nombre: string }>;
+  pais: string[];
+  tags: string[];
+  onFiltersChange: (filters: FilterState) => void;
+  initialFilters?: Partial<FilterState>;
 }
 
 /* ───────────────────────────── Helpers ───────────────────────────── */
 const useDebounce = (value: string, delay: number): string => {
-  const [debouncedValue, setDebouncedValue] = useState(value)
+  const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
-    const h = setTimeout(() => setDebouncedValue(value), delay)
-    return () => clearTimeout(h)
-  }, [value, delay])
-  return debouncedValue
-}
+    const h = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(h);
+  }, [value, delay]);
+  return debouncedValue;
+};
 
 /* ─────────────────────────── Component ─────────────────────────── */
 export default function SeriesFilters({
@@ -55,110 +55,107 @@ export default function SeriesFilters({
   pais: countries,
   tags,
   onFiltersChange,
-  initialFilters = {}
+  initialFilters = {},
 }: SeriesFiltersProps) {
   const [filters, setFilters] = useState<FilterState>({
-    search: '',
+    search: "",
     selectedGenres: [],
     selectedPlatforms: [],
-    sortBy: 'newest',
-    pais: '',
+    sortBy: "newest",
+    pais: "",
     tags: [],
-    ...initialFilters
-  })
+    ...initialFilters,
+  });
 
-  const [showGenres, setShowGenres] = useState(false)
-  const [showPlatforms, setShowPlatforms] = useState(false)
-  const [showCountries, setShowCountries] = useState(false)
-  const [showTags, setShowTags] = useState(false)
-  const genreRef = useRef<HTMLDivElement>(null)
-  const platformRef = useRef<HTMLDivElement>(null)
-  const countryRef = useRef<HTMLDivElement>(null)
-  const tagRef = useRef<HTMLDivElement>(null)
+  const [showGenres, setShowGenres] = useState(false);
+  const [showPlatforms, setShowPlatforms] = useState(false);
+  const [showCountries, setShowCountries] = useState(false);
+  const [showTags, setShowTags] = useState(false);
+  const genreRef = useRef<HTMLDivElement>(null);
+  const platformRef = useRef<HTMLDivElement>(null);
+  const countryRef = useRef<HTMLDivElement>(null);
+  const tagRef = useRef<HTMLDivElement>(null);
 
-  useClickOutside(genreRef, () => setShowGenres(false))
-  useClickOutside(platformRef, () => setShowPlatforms(false))
-  useClickOutside(countryRef, () => setShowCountries(false))
-  useClickOutside(tagRef, () => setShowTags(false))
+  useClickOutside(genreRef, () => setShowGenres(false));
+  useClickOutside(platformRef, () => setShowPlatforms(false));
+  useClickOutside(countryRef, () => setShowCountries(false));
+  useClickOutside(tagRef, () => setShowTags(false));
 
-  const debouncedSearch = useDebounce(filters.search, 300)
+  const debouncedSearch = useDebounce(filters.search, 300);
 
-  const sortOptions = useMemo(() => [
-    { value: 'newest', label: 'Más recientes' },
-    { value: 'oldest', label: 'Más antiguos' },
-    { value: 'title', label: 'Título A-Z' },
-    { value: 'year', label: 'Año' },
-    { value: 'seasons', label: 'Temporadas' }
-  ] as const, [])
+  const sortOptions = useMemo(
+    () =>
+      [
+        { value: "newest", label: "Más recientes" },
+        { value: "oldest", label: "Más antiguos" },
+        { value: "title", label: "Título A-Z" },
+        { value: "year", label: "Año" },
+        { value: "seasons", label: "Temporadas" },
+      ] as const,
+    []
+  );
 
   /* ───────────────────────── Callbacks ───────────────────────── */
   const handleSearchChange = (v: string) =>
-    setFilters(prev => ({ ...prev, search: v }))
+    setFilters((prev) => ({ ...prev, search: v }));
 
   const handleSortChange = (v: SortOption) =>
-    setFilters(prev => ({ ...prev, sortBy: v }))
+    setFilters((prev) => ({ ...prev, sortBy: v }));
 
   const toggleGenre = (id: string) =>
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       selectedGenres: prev.selectedGenres.includes(id)
-        ? prev.selectedGenres.filter(g => g !== id)
-        : [...prev.selectedGenres, id]
-    }))
+        ? prev.selectedGenres.filter((g) => g !== id)
+        : [...prev.selectedGenres, id],
+    }));
 
   const togglePlatform = (id: string) =>
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       selectedPlatforms: prev.selectedPlatforms.includes(id)
-        ? prev.selectedPlatforms.filter(p => p !== id)
-        : [...prev.selectedPlatforms, id]
-    }))
+        ? prev.selectedPlatforms.filter((p) => p !== id)
+        : [...prev.selectedPlatforms, id],
+    }));
 
   const handleCountrySelect = (country: string) => {
-    setFilters(prev => ({ ...prev, pais: country }))
-    setShowCountries(false)
-  }
+    setFilters((prev) => ({ ...prev, pais: country }));
+    setShowCountries(false);
+  };
 
   const clearFilters = () =>
     setFilters({
-      search: '',
+      search: "",
       selectedGenres: [],
       selectedPlatforms: [],
-      sortBy: 'newest',
-      pais: '',
-      tags: []
-    })
+      sortBy: "newest",
+      pais: "",
+      tags: [],
+    });
 
   useEffect(() => {
-    onFiltersChange({ ...filters, search: debouncedSearch })
-  }, [
-    debouncedSearch,
-    filters.selectedGenres,
-    filters.selectedPlatforms,
-    filters.sortBy,
-    filters.pais,
-    filters.tags,
-    onFiltersChange
-  ])
+    onFiltersChange({ ...filters, search: debouncedSearch });
+  }, [debouncedSearch, filters, onFiltersChange]);
 
   const hasActiveFilters =
     filters.search ||
     filters.selectedGenres.length > 0 ||
     filters.selectedPlatforms.length > 0 ||
     filters.pais ||
-    filters.sortBy !== 'newest' ||
-    filters.tags.length > 0
+    filters.sortBy !== "newest" ||
+    filters.tags.length > 0;
 
   function handleTagSelect(tag: string): void {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      tags: tag === ''
-        ? []
-        : prev.tags.includes(tag)
-          ? prev.tags.filter(t => t !== tag)
-          : [...prev.tags, tag]
-    }))
-    setShowTags(false)
+      tags:
+        tag === ""
+          ? []
+          : prev.tags.includes(tag)
+          ? prev.tags.filter((t) => t !== tag)
+          : [...prev.tags, tag],
+    }));
+    setShowTags(false);
   }
   return (
     <div className="mb-8 space-y-4">
@@ -194,8 +191,11 @@ export default function SeriesFilters({
           {showGenres && (
             <div className="absolute top-full left-0 z-50 mt-2 w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-800">
               <div className="max-h-48 space-y-2 overflow-y-auto">
-                {genres.map(g => (
-                  <label key={g.id} className="flex cursor-pointer items-center gap-3">
+                {genres.map((g) => (
+                  <label
+                    key={g.id}
+                    className="flex cursor-pointer items-center gap-3"
+                  >
                     <input
                       type="checkbox"
                       checked={filters.selectedGenres.includes(g.id)}
@@ -230,8 +230,11 @@ export default function SeriesFilters({
           {showPlatforms && (
             <div className="absolute top-full left-0 z-50 mt-2 w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-800">
               <div className="max-h-48 space-y-2 overflow-y-auto">
-                {platforms.map(p => (
-                  <label key={p.id} className="flex cursor-pointer items-center gap-3">
+                {platforms.map((p) => (
+                  <label
+                    key={p.id}
+                    className="flex cursor-pointer items-center gap-3"
+                  >
                     <input
                       type="checkbox"
                       checked={filters.selectedPlatforms.includes(p.id)}
@@ -268,22 +271,24 @@ export default function SeriesFilters({
               <ul className="max-h-48 space-y-1 overflow-y-auto text-sm">
                 <li>
                   <button
-                    className={`w-full rounded px-2 py-1 text-left ${filters.pais === ''
-                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
-                      : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
-                      }`}
-                    onClick={() => handleCountrySelect('')}
+                    className={`w-full rounded px-2 py-1 text-left ${
+                      filters.pais === ""
+                        ? "bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300"
+                        : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                    }`}
+                    onClick={() => handleCountrySelect("")}
                   >
                     Todos
                   </button>
                 </li>
-                {countries.map(country => (
+                {countries.map((country) => (
                   <li key={country}>
                     <button
-                      className={`w-full rounded px-2 py-1 text-left ${filters.pais === country
-                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
-                        : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
-                        }`}
+                      className={`w-full rounded px-2 py-1 text-left ${
+                        filters.pais === country
+                          ? "bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300"
+                          : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                      }`}
                       onClick={() => handleCountrySelect(country)}
                     >
                       {country}
@@ -315,22 +320,24 @@ export default function SeriesFilters({
               <ul className="max-h-48 space-y-1 overflow-y-auto text-sm">
                 <li>
                   <button
-                    className={`w-full rounded px-2 py-1 text-left ${filters.tags.length === 0
-                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
-                      : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
-                      }`}
-                    onClick={() => handleTagSelect('')}
+                    className={`w-full rounded px-2 py-1 text-left ${
+                      filters.tags.length === 0
+                        ? "bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300"
+                        : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                    }`}
+                    onClick={() => handleTagSelect("")}
                   >
                     Todos
                   </button>
                 </li>
-                {tags.map(tag => (
+                {tags.map((tag) => (
                   <li key={tag}>
                     <button
-                      className={`w-full rounded px-2 py-1 text-left ${filters.tags.includes(tag)
-                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
-                        : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
-                        }`}
+                      className={`w-full rounded px-2 py-1 text-left ${
+                        filters.tags.includes(tag)
+                          ? "bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300"
+                          : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                      }`}
                       onClick={() => handleTagSelect(tag)}
                     >
                       {tag}
@@ -348,8 +355,10 @@ export default function SeriesFilters({
           onChange={(e) => handleSortChange(e.target.value as SortOption)}
           className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition-colors focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
         >
-          {sortOptions.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
+          {sortOptions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
           ))}
         </select>
 
@@ -366,13 +375,17 @@ export default function SeriesFilters({
       </div>
 
       {/* Etiquetas activas */}
-      {(filters.selectedGenres.length > 0
-        || filters.selectedPlatforms.length > 0) && (
-          <div className="flex flex-wrap gap-2">
-            {filters.selectedGenres.map(id => {
-              const g = genres.find(x => x.id === id)
-              return g && (
-                <span key={id} className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-sm font-medium text-violet-700 dark:bg-violet-900 dark:text-violet-300">
+      {(filters.selectedGenres.length > 0 ||
+        filters.selectedPlatforms.length > 0) && (
+        <div className="flex flex-wrap gap-2">
+          {filters.selectedGenres.map((id) => {
+            const g = genres.find((x) => x.id === id);
+            return (
+              g && (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-sm font-medium text-violet-700 dark:bg-violet-900 dark:text-violet-300"
+                >
                   {g.nombre}
                   <button
                     onClick={() => toggleGenre(id)}
@@ -382,11 +395,16 @@ export default function SeriesFilters({
                   </button>
                 </span>
               )
-            })}
-            {filters.selectedPlatforms.map(id => {
-              const p = platforms.find(x => x.id === id)
-              return p && (
-                <span key={id} className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+            );
+          })}
+          {filters.selectedPlatforms.map((id) => {
+            const p = platforms.find((x) => x.id === id);
+            return (
+              p && (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                >
                   {p.nombre}
                   <button
                     onClick={() => togglePlatform(id)}
@@ -396,9 +414,10 @@ export default function SeriesFilters({
                   </button>
                 </span>
               )
-            })}
-          </div>
-        )}
+            );
+          })}
+        </div>
+      )}
     </div>
-  )
+  );
 }

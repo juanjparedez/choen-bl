@@ -1,133 +1,142 @@
-'use client'
+"use client";
 
-import { useState, useCallback, useEffect } from 'react'
-import Link from 'next/link'
-import SeriesFilters from '../components/SeriesFilters'
-import SmartImage from '../components/SmartImageProps'
+import { useState, useCallback, useEffect } from "react";
+import Link from "next/link";
+import SeriesFilters from "../components/SeriesFilters";
+import SmartImage from "../components/SmartImageProps";
 
-
-type SortOption = 'newest' | 'oldest' | 'title' | 'year' | 'seasons'
+type SortOption = "newest" | "oldest" | "title" | "year" | "seasons";
 
 interface FilterState {
-  search: string
-  selectedGenres: string[]
-  selectedPlatforms: string[]
-  sortBy: SortOption
-  pais: string | null
-  tags: string[]
+  search: string;
+  selectedGenres: string[];
+  selectedPlatforms: string[];
+  sortBy: SortOption;
+  pais: string | null;
+  tags: string[];
 }
 
 interface Serie {
-  pais: any
-  id: string
-  titulo: string
-  año?: number | null
-  temporadas?: number | null
-  sinopsis?: string | null
-  poster?: string | null
-  createdAt: Date
-  generos: Array<{ genero: { id: string; nombre: string } }>
-  tags: Array<{ tag: { id: string; nombre: string } }>
-  actores: Array<{ id: string; nombre: string }>
-  plataformas: Array<{ plataforma: { id: string; nombre: string } }>
-  _count: { actores: number }
+  pais: string | null;
+  id: string;
+  titulo: string;
+  año?: number | null;
+  temporadas?: number | null;
+  sinopsis?: string | null;
+  poster?: string | null;
+  createdAt: Date;
+  generos: Array<{ genero: { id: string; nombre: string } }>;
+  tags: Array<{
+    nombre: string;
+    tag: { id: string; nombre: string };
+  }>;
+  actores: Array<{ id: string; nombre: string }>;
+  plataformas: Array<{ plataforma: { id: string; nombre: string } }>;
+  _count: { actores: number };
 }
 
 export default function SeriesPage() {
-  const [series, setSeries] = useState<Serie[]>([])
-  const [filteredSeries, setFilteredSeries] = useState<Serie[]>([])
-  const [loading, setLoading] = useState(true)
+  const [series, setSeries] = useState<Serie[]>([]);
+  const [filteredSeries, setFilteredSeries] = useState<Serie[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSeries = async () => {
       try {
-        const response = await fetch('/api/series')
-        const data = await response.json()
-        setSeries(data)
-        setFilteredSeries(data)
+        const response = await fetch("/api/series");
+        const data = await response.json();
+        setSeries(data);
+        setFilteredSeries(data);
       } catch (error) {
-        console.error('Error fetching series:', error)
+        console.error("Error fetching series:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchSeries()
-  }, [])
+    fetchSeries();
+  }, []);
 
-  const handleFiltersChange = useCallback((filters: FilterState) => {
-    let filtered = [...series]
+  const handleFiltersChange = useCallback(
+    (filters: FilterState) => {
+      let filtered = [...series];
 
-    if (filters.search) {
-      const search = filters.search.toLowerCase()
-      filtered = filtered.filter(serie =>
-        serie.titulo.toLowerCase().includes(search) ||
-        serie.sinopsis?.toLowerCase().includes(search)
-      )
-    }
+      if (filters.search) {
+        const search = filters.search.toLowerCase();
+        filtered = filtered.filter(
+          (serie) =>
+            serie.titulo.toLowerCase().includes(search) ||
+            serie.sinopsis?.toLowerCase().includes(search)
+        );
+      }
 
-    if (filters.selectedGenres.length > 0) {
-      filtered = filtered.filter(serie =>
-        serie.generos.some(sg => filters.selectedGenres.includes(sg.genero.id))
-      )
-    }
+      if (filters.selectedGenres.length > 0) {
+        filtered = filtered.filter((serie) =>
+          serie.generos.some((sg) =>
+            filters.selectedGenres.includes(sg.genero.id)
+          )
+        );
+      }
 
-    if (filters.selectedPlatforms.length > 0) {
-      filtered = filtered.filter(serie =>
-        serie.plataformas.some(sp => filters.selectedPlatforms.includes(sp.plataforma.id))
-      )
-    }
+      if (filters.selectedPlatforms.length > 0) {
+        filtered = filtered.filter((serie) =>
+          serie.plataformas.some((sp) =>
+            filters.selectedPlatforms.includes(sp.plataforma.id)
+          )
+        );
+      }
 
-    if (filters.pais) {
-      filtered = filtered.filter(serie => serie.pais === filters.pais)
-    }
+      if (filters.pais) {
+        filtered = filtered.filter((serie) => serie.pais === filters.pais);
+      }
 
-    const sortFunctions = {
-      newest: (a: Serie, b: Serie) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      oldest: (a: Serie, b: Serie) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      title: (a: Serie, b: Serie) => a.titulo.localeCompare(b.titulo),
-      year: (a: Serie, b: Serie) => (b.año || 0) - (a.año || 0),
-      seasons: (a: Serie, b: Serie) => (b.temporadas || 0) - (a.temporadas || 0)
-    }
+      const sortFunctions = {
+        newest: (a: Serie, b: Serie) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        oldest: (a: Serie, b: Serie) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        title: (a: Serie, b: Serie) => a.titulo.localeCompare(b.titulo),
+        year: (a: Serie, b: Serie) => (b.año || 0) - (a.año || 0),
+        seasons: (a: Serie, b: Serie) =>
+          (b.temporadas || 0) - (a.temporadas || 0),
+      };
 
-    filtered.sort(sortFunctions[filters.sortBy])
-    setFilteredSeries(filtered)
-  }, [series])
-
-  const fallbackPoster = (title: string) =>
-    `https://placehold.co/600x900/E0E7FF/4338CA?text=${encodeURIComponent(title)}`
+      filtered.sort(sortFunctions[filters.sortBy]);
+      setFilteredSeries(filtered);
+    },
+    [series]
+  );
 
   // Extract unique genres and platforms
   const uniqueGenres = Array.from(
     new Map(
-      series.flatMap(s => s.generos.map(sg => sg.genero))
-        .map(g => [g.id, g])
+      series
+        .flatMap((s) => s.generos.map((sg) => sg.genero))
+        .map((g) => [g.id, g])
     ).values()
-  )
+  );
 
   const uniqueCountries = Array.from(
     new Set(
-      series
-        .map(s => s.pais)
-        .filter((pais): pais is string => Boolean(pais))
+      series.map((s) => s.pais).filter((pais): pais is string => Boolean(pais))
     )
-  ).sort()
+  ).sort();
 
   const uniqueTags = Array.from(
-    new Set(
-      series.flatMap(s => s?.tags?.map(tag => tag.nombre))
-    )
-  ).sort()
-  .map(tag => ({ nombre: tag })) || ['todos']
+    new Set(series.flatMap((s) => s?.tags?.map((tag) => tag.nombre)))
+  )
+    .sort()
+    .map((tag) => ({ nombre: tag })) || ["todos"];
 
-  console.log({ series })
+  console.log({ series });
 
   const uniquePlatforms = Array.from(
     new Map(
-      series.flatMap(s => s.plataformas.map(sp => sp.plataforma))
-        .map(p => [p.id, p])
+      series
+        .flatMap((s) => s.plataformas.map((sp) => sp.plataforma))
+        .map((p) => [p.id, p])
     ).values()
-  )
+  );
 
   if (loading) {
     return (
@@ -136,12 +145,15 @@ export default function SeriesPage() {
           <div className="mb-8 h-8 w-64 bg-slate-200 rounded dark:bg-slate-700"></div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="aspect-[3/4] bg-slate-200 rounded-xl dark:bg-slate-700"></div>
+              <div
+                key={i}
+                className="aspect-[3/4] bg-slate-200 rounded-xl dark:bg-slate-700"
+              ></div>
             ))}
           </div>
         </div>
       </section>
-    )
+    );
   }
 
   return (
@@ -164,8 +176,7 @@ export default function SeriesPage() {
         platforms={uniquePlatforms}
         onFiltersChange={handleFiltersChange}
         pais={uniqueCountries}
-        tags={uniqueTags}
-
+        tags={uniqueTags.map((tag) => tag.nombre)}
       />
 
       {filteredSeries.length === 0 && series.length > 0 ? (
@@ -228,8 +239,13 @@ export default function SeriesPage() {
 
                   <p className="text-sm text-slate-600 dark:text-slate-400">
                     {serie.año && <span>{serie.año} • </span>}
-                    {serie.temporadas} temporada{serie?.temporadas != null && serie?.temporadas > 1 ? 's' : ''}
-                    {serie._count.actores > 0 && <> • {serie._count.actores} actores</>}
+                    {serie.temporadas} temporada
+                    {serie?.temporadas != null && serie?.temporadas > 1
+                      ? "s"
+                      : ""}
+                    {serie._count.actores > 0 && (
+                      <> • {serie._count.actores} actores</>
+                    )}
                   </p>
 
                   {serie.sinopsis && (
@@ -257,5 +273,5 @@ export default function SeriesPage() {
         </ul>
       )}
     </section>
-  )
+  );
 }

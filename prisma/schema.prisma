@@ -39,6 +39,14 @@ enum WatchlistEstado {
   ABANDONADA
 }
 
+enum MediaTipo {
+  POSTER
+  BACKDROP
+  SCREENSHOT
+  BTS
+  PROMO
+}
+
 // ========== MODELOS PRINCIPALES ==========
 
 model User {
@@ -51,12 +59,13 @@ model User {
   
   ratings     SerieRating[]
   watchlist   Watchlist[]
+  
   @@index([createdAt])
 }
 
 model Serie {
   id                String              @id @default(uuid())
-  titulo            String @unique
+  titulo            String              @unique
   sinopsis          String?
   año               Int?
   temporadas        Int?
@@ -77,8 +86,8 @@ model Serie {
   // Información adicional
   creador           String?
   productora        String?
-  presupuesto       Float?              // Cambiado de Decimal a Float para SQLite
-  recaudacion       Float?              // Cambiado de Decimal a Float para SQLite
+  presupuesto       Float?
+  recaudacion       Float?
   
   // Contenido
   rating            Float?
@@ -100,6 +109,10 @@ model Serie {
   watchlists        Watchlist[]
   temporadasInfo    Temporada[]
   galeria           MediaItem[]
+  
+  @@index([estado])
+  @@index([año])
+  @@index([createdAt])
 }
 
 model Temporada {
@@ -142,28 +155,24 @@ model MediaItem {
   orden       Int         @default(0)
   
   serie       Serie       @relation(fields: [serieId], references: [id], onDelete: Cascade)
+  
   @@index([serieId])
+  @@index([tipo])
 }
 
-enum MediaTipo {
-  POSTER
-  BACKDROP
-  SCREENSHOT
-  BTS // Behind the scenes
-  PROMO
-}
-
-// ========== CATALOGOS ==========
+// ========== CATÁLOGOS ==========
 
 model Actor {
   id           String       @id @default(cuid())
-  nombre       String @unique
+  nombre       String       @unique
   nacionalidad String?
   fechaNac     DateTime?
   foto         String?
   biografia    String?
   
   series       ActorSerie[]
+  
+  @@index([nombre])
 }
 
 model Genero {
@@ -186,7 +195,7 @@ model Plataforma {
   id          String             @id @default(cuid())
   nombre      String             @unique
   logo        String?
-  urlBase     String?            // URL base de la plataforma
+  urlBase     String?
   activa      Boolean            @default(true)
   
   series      PlataformaSerie[]
@@ -209,7 +218,7 @@ model ActorSerie {
   actorId      String
   personaje    String?
   tipoRol      TipoRolActor?
-  orden        Int           @default(999) // Para ordenar en pantalla
+  orden        Int           @default(999)
 
   @@id([serieId, actorId])
   @@index([serieId])
@@ -252,6 +261,7 @@ model PlataformaSerie {
   @@id([serieId, plataformaId])
   @@index([serieId])
   @@index([plataformaId])
+  @@index([disponible])
 }
 
 model SerieTag {
@@ -265,7 +275,7 @@ model SerieTag {
   @@index([tagId])
 }
 
-// ========== INTERACCION USUARIO ==========
+// ========== INTERACCIÓN USUARIO ==========
 
 model SerieRating {
   id         String   @id @default(cuid())
@@ -282,6 +292,7 @@ model SerieRating {
   @@unique([serieId, userId])
   @@index([serieId])
   @@index([userId])
+  @@index([rating])
 }
 
 model Watchlist {
@@ -300,4 +311,5 @@ model Watchlist {
   @@unique([userId, serieId])
   @@index([userId])
   @@index([serieId])
+  @@index([estado])
 }
